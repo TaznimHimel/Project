@@ -1,0 +1,59 @@
+# Settings shared by every configuration. Each ablation config overrides a few keys.
+# Tuned for a 6 GB RTX 2060.
+
+seed: 0
+
+data:
+  manifest: data/processed/manifest.csv
+  source_domain: tn3k            # the only domain used for training
+  target_domains: [ddti]         # zero-shot only, never trained on
+  image_size: 256
+
+model:
+  encoder: resnet34
+  encoder_weights: imagenet
+  decoder_dropout: 0.2           # decoder only, so MC dropout does not disturb the
+                                 # pretrained encoder features
+
+train:
+  epochs: 60
+  batch_size: 8
+  lr: 0.0003
+  weight_decay: 0.0001
+  amp: true                      # mixed precision; required to fit in 6 GB
+  num_workers: 4
+  loss:
+    dice_weight: 1.0
+    bce_weight: 1.0
+  augment:                        # geometry + mild photometric, identical in all configs
+    hflip: 0.5
+    scale_rotate: 0.5
+    brightness_contrast: 0.3
+  scheduler: cosine
+  early_stop_patience: 15         # on TN3K val Dice
+
+# switched on by configs c2..c5
+style:
+  enabled: false
+  method: fourier                # low-frequency amplitude randomisation
+  beta: 0.09                     # size of the swapped low-frequency square
+  alpha_max: 1.0                 # interpolation strength towards the random amplitude
+  prob: 0.5
+
+consistency:
+  enabled: false
+  weight: 1.0
+  gating: none                   # none | total | epistemic  (configs 2 / 4 / 5)
+  warmup_epochs: 10              # segmentation terms only before gating is phased in
+  mc_passes_train: 8
+
+uncertainty:
+  method: mc_dropout             # mc_dropout | entropy | ensemble
+  mc_passes_eval: 20             # capped, per proposal section 9
+
+eval:
+  dice_failure_threshold: 0.7    # an image counts as a failure below this Dice
+  bootstrap_samples: 2000
+  boundary_band_px: 5            # width of the band used for boundary-restricted ECE
+
+output_dir: outputs

@@ -1,0 +1,12 @@
+# datasets and generated artefacts are never committed
+data/raw/
+data/processed/
+outputs/
+.venv/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.DS_Store
+*.pth
+*.pt
+runs/
